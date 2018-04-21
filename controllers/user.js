@@ -9,10 +9,14 @@ const store = new userMySqlStore('./dbSqllite/user.db');
 const utils = require('./../utils/utils');
 
 const user = {
-    back_add: async (ctx, next) => {
+    test: async (ctx, next) => {
+        ctx.response.body = 'Hello World';
+    },
+    front_regist: async (ctx, next) => {
+        // console.log('front_regist ctx ->', ctx);
         utils.setHeaders(ctx);
         const params = ctx.request.body ? ctx.request.body : null;
-        let { flag, data, err } = await store.back_add(params);
+        let { flag, data, err } = await store.front_regist(params);
         let res = null;
         if (flag) {
             res = {
@@ -99,20 +103,20 @@ const user = {
             }
             ctx.response.body = res;
         }, */
-    back_login: async (ctx, next) => {
+    front_login: async (ctx, next) => {
         utils.setHeaders(ctx);
         const params = ctx.request.body ? ctx.request.body : null;
         let res = null;
         let { flag, data, err } = await store.back_judgeUserExist(params);
         if (data.length) {
             let { flag, data, err } = await store.back_setAccesstoken(data[0]);
-            const { id, username, accesstoken } = data;
+            const { id, phone, accesstoken } = data;
             if (flag) {
                 res = {
                     code: 0,
                     data: {
                         userId: id,
-                        username,
+                        phone,
                         accesstoken
                     }
                 };
@@ -137,7 +141,7 @@ const user = {
 
         ctx.response.body = res;
     },
-    back_logout: async (ctx, next) => {
+    front_logout: async (ctx, next) => {
         utils.setHeaders(ctx);
         const params = ctx.request.body ? ctx.request.body : null;
         let { flag, data, err } = await store.back_clearAccesstoken(params);
@@ -161,11 +165,11 @@ const user = {
 };
 
 module.exports = {
-    // 'GET /rabbit/user/back_get_page': user.back_get_page,
+    'GET /test': user.test,
     // 'POST /rabbit/user/back_update_id': user.back_update_id,
-    'POST /rabbit/user/back_add': user.back_add,
+    'POST /rabbitApi/user/front_regist': user.front_regist,
     // 'POST /rabbit/user/back_batch_delete': user.back_batch_delete,
-    'POST /rabbit/user/back_login': user.back_login,
-    'POST /rabbit/user/back_logout': user.back_logout
+    'POST /rabbitApi/user/front_login': user.front_login,
+    'POST /rabbitApi/user/front_logout': user.front_logout
 };
 

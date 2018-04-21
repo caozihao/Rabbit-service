@@ -241,10 +241,10 @@ module.exports = {
     // 'GET /rabbit/goods/front_get_page_previous': goods.front_get_page_previous,
     // 'GET /rabbit/goods/front_get_page_next': goods.front_get_page_next,
 
-    'GET /rabbit/goods/back_get_page': goods.back_get_page,
-    'GET /rabbit/goods/back_get_id': goods.back_get_id,
+    'GET /rabbitApi/goods/back_get_page': goods.back_get_page,
+    'GET /rabbitApi/goods/back_get_id': goods.back_get_id,
     // 'POST /rabbit/goods/back_batch_delete': goods.back_batch_delete,
-    'POST /rabbit/goods/back_add': goods.back_add,
+    'POST /rabbitApi/goods/back_add': goods.back_add,
     // 'POST /rabbit/goods/back_update_id': goods.back_update_id
 
 
