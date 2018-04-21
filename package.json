@@ -1,0 +1,25 @@
+{
+  "name": "koa-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "crypto-js": "^3.1.9-1",
+    "forever": "^0.15.3",
+    "koa": "^2.2.0",
+    "koa-bodyparser": "^4.2.0",
+    "koa-router": "^7.1.1",
+    "mo9-sso": "^0.1.2",
+    "mysql": "^2.13.0",
+    "nodemon": "^1.1.2"
+  },
+  "scripts": {
+    "start": "nodemon rabbit-app.js",
+    "forever-start": "forever start rabbit-app.js",
+    "forever-stop": "forever stop rabbit-app.js",
+    "forever-logs": "forever start -o logs/out.log -e logs/err.log rabbit-app.js",
+    "forever-list": "forever list"
+  },
+  "author": "Skull",
+  "license": "ISC"
+}
