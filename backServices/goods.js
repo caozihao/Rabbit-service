@@ -15,17 +15,18 @@ const TABLE_NAME = 'goods';
 
 const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     id INT(11) NOT NULL AUTO_INCREMENT,
+                    type VARCHAR(64) NOT NULL,
                     category INT NOT NULL,
                     status INT NOT NULL,
-                    imgurl VARCHAR(64),
-                    place INT NOT NULL,
+                    place  VARCHAR(64) NOT NULL,
+                    imageUrl VARCHAR(64),
 
                     userId INT NOT NULL,
-                    username  VARCHAR(64) NOT NULL,
+                    userNickname  VARCHAR(64) NOT NULL,
                     
                     articleTitle VARCHAR(64) NOT NULL,
                     articleReadNum INT,
-                    articleContent  VARCHAR(64),
+                    articleContent  TEXT(64),
 
                     createdTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updatedTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -48,9 +49,9 @@ const SQL_GET_PAGE_NO_FILTER = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime
 
 const SQL_GET_ID = `SELECT * FROM ${TABLE_NAME} WHERE id = ?`;
 
-const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET title = ?,author = ?,content =?  WHERE id = ?`;
+const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type = ?,category =?, status =?,place =?,imageUrl =?,userId =?,userNickname =?,articleTitle =?,articleContent = ? WHERE id = ?`;
 
-const SQL_SET = `INSERT  INTO ${TABLE_NAME} (title, author,readNum,content) VALUES (?, ?, ?, ?)`;
+const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type, category,status,place,imageUrl,userId,userNickname,articleTitle,articleContent) VALUES (?, ?, ?, ?,?,?,?,?,?)`;
 
 const mysql = require('mysql');
 const config = require('../config');
@@ -67,17 +68,17 @@ class MySqlStore {
     }
 
     //添加一条数据
-    back_add(params) {
+    create(params) {
         return new Promise((resolve, reject) => {
-            const { category, status, imgurl, place, userId, username, articleTitle, articleReadNum, articleContent } = params;
+            const { type, category, status, place, imageUrl, userId, userNickname, articleTitle, articleContent } = params;
 
             pool.getConnection((err, connection) => {
-                connection.query(SQL_SET, [category, status, imgurl, place, userId, username, articleTitle, articleReadNum, articleContent], (err) => {
+                connection.query(SQL_SET, [type, category, status, place, imageUrl, userId, userNickname, articleTitle, articleContent], (err) => {
                     if (!err) {
                         resolve({ flag: true });
                     } else {
                         reject({ flag: false, err });
-                        console.log("back_add error->", err);
+                        console.log("create error->", err);
                     }
                     connection.release();
                 });
@@ -86,7 +87,7 @@ class MySqlStore {
     }
 
     //批量删除
-    back_batch_delete(params) {
+    batchDeleteByIds(params) {
         return new Promise((resolve, reject) => {
             let { ids } = params;
             ids = "(" + ids + ")";
@@ -98,7 +99,7 @@ class MySqlStore {
                         resolve({ flag: true });
                     } else {
                         reject({ flag: false, err });
-                        console.log("back_batch_delete error->", err);
+                        console.log("batchDeleteByIds error->", err);
                     }
                     connection.release();
                 });
@@ -107,7 +108,7 @@ class MySqlStore {
     }
 
     //根据id找数据
-    back_get_id(params) {
+    getById(params) {
         return new Promise((resolve, reject) => {
             const { id } = params;
             //查询单条
@@ -118,7 +119,7 @@ class MySqlStore {
                         resolve({ flag: true, data });
                     } else {
                         reject({ flag: false, err });
-                        console.log("back_get_id error->", err);
+                        console.log("getById error->", err);
                     }
                     connection.release();
                 });
@@ -128,18 +129,18 @@ class MySqlStore {
     }
 
     //根据id更新
-    back_update_id(params) {
+    updateById(params) {
         return new Promise((resolve, reject) => {
-            const { id, title, author, content } = params;
+            const { type, category, status, place, imageUrl, userId, userNickname, articleTitle, articleContent, id } = params;
             //更新数据
 
             pool.getConnection((err, connection) => {
-                connection.query(SQL_UPDATE_ID, [title, author, content, id], (err, data) => {
+                connection.query(SQL_UPDATE_ID, [type, category, status, place, imageUrl, userId, userNickname, articleTitle, articleContent, id], (err, data) => {
                     if (!err) {
                         resolve({ flag: true });
                     } else {
                         reject({ flag: false, err });
-                        console.log("back_update_id error->", err);
+                        console.log("updateById error->", err);
                     }
                     connection.release();
                 });
@@ -148,17 +149,19 @@ class MySqlStore {
     }
 
     //获取所有数据的数量
-    back_get_all_count(params) {
+    getAllCount(params) {
         return new Promise((resolve, reject) => {
-            const { filterUserName } = params;
+            const { palce, type, startTime, endTime } = params;
             let SQL_GET_COUNT = SQL_GET_COUNT_NO_FILTER;
-            // console.log("back_get_all_count filterUserName ->",filterUserName);
-            if (filterUserName) {
-                SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME}
-                WHERE author LIKE '%${filterUserName}%'   
-                OR title LIKE '%${filterUserName}%'
-                OR content LIKE '%${filterUserName}%'`;
+            // console.log("getAllCount filterUserName ->",filterUserName);
+
+            if (place) {
+                SQL_GET_PAGE = `SELECT count(*) as cnt  FROM ${TABLE_NAME} 
+                WHERE place LIKE '%${place}%' 
+                AND type = ?
+                AND createdTime BETWEEN startTime AND endTime`;
             }
+
             //查询数据的数量
             pool.getConnection((err, connection) => {
                 connection.query(SQL_GET_COUNT, (err, data) => {
@@ -166,7 +169,7 @@ class MySqlStore {
                         resolve(data);
                     } else {
                         reject({ flag: false, err });
-                        console.log("back_get_all_count error->", err);
+                        console.log("getAllCount error->", err);
                     }
                     connection.release();
                 });
@@ -175,17 +178,18 @@ class MySqlStore {
     }
 
     //分页查询数据
-    back_get_page(params) {
+    getListByOffset(params) {
         return new Promise((resolve, reject) => {
-            let { pageNo: offset, pageSize: limit, filterUserName } = params;
+            let { pageNo: offset, pageSize: limit, place, type, startTime, endTime } = params;
+
             let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
-            if (filterUserName) {
+            if (place) {
                 SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} 
-            WHERE author LIKE '%${filterUserName}%'   
-            OR title LIKE '%${filterUserName}%'
-            OR content LIKE '%${filterUserName}%'
-            ORDER BY updatedTime DESC
-            LIMIT ? , ?`;
+                WHERE place LIKE '%${place}%' 
+                AND type = ?
+                AND createdTime BETWEEN startTime AND endTime
+                ORDER BY updatedTime DESC
+                LIMIT ? , ?`;
             }
             //查询多条
             offset = parseInt(offset);
@@ -204,41 +208,41 @@ class MySqlStore {
         })
     }
     //查找上一条
-    front_get_page_previous(params) {
-        return new Promise((resolve, reject) => {
-            const { id } = params;
-            pool.getConnection((err, connection) => {
-                connection.query(SQL_GET_PREVIOUS, [id], (err, data) => {
-                    if (!err) {
-                        resolve({ flag: true, data });
-                    } else {
-                        reject({ flag: false, err });
-                        console.log("front_get_page_previous error->", err);
-                    }
-                    connection.release();
-                });
-            });
-        })
-    }
+    // front_get_page_previous(params) {
+    //     return new Promise((resolve, reject) => {
+    //         const { id } = params;
+    //         pool.getConnection((err, connection) => {
+    //             connection.query(SQL_GET_PREVIOUS, [id], (err, data) => {
+    //                 if (!err) {
+    //                     resolve({ flag: true, data });
+    //                 } else {
+    //                     reject({ flag: false, err });
+    //                     console.log("front_get_page_previous error->", err);
+    //                 }
+    //                 connection.release();
+    //             });
+    //         });
+    //     })
+    // }
 
     //查找下一条
-    front_get_page_next(params) {
-        return new Promise((resolve, reject) => {
-            const { id } = params;
-            pool.getConnection((err, connection) => {
-                connection.query(SQL_GET_NEXT, [id], (err, data) => {
-                    if (!err) {
-                        resolve({ flag: true, data });
-                    } else {
-                        reject({ flag: false, err });
-                        console.log("front_get_page_next error->", err);
-                    }
-                    connection.release();
-                });
-            });
+    // front_get_page_next(params) {
+    //     return new Promise((resolve, reject) => {
+    //         const { id } = params;
+    //         pool.getConnection((err, connection) => {
+    //             connection.query(SQL_GET_NEXT, [id], (err, data) => {
+    //                 if (!err) {
+    //                     resolve({ flag: true, data });
+    //                 } else {
+    //                     reject({ flag: false, err });
+    //                     console.log("front_get_page_next error->", err);
+    //                 }
+    //                 connection.release();
+    //             });
+    //         });
 
-        })
-    }
+    //     })
+    // }
 }
 
 

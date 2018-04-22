@@ -7,29 +7,37 @@
 const userMySqlStore = require('./../backServices/user');
 const store = new userMySqlStore('./dbSqllite/user.db');
 const utils = require('./../utils/utils');
+const errorConstant = require('./../errorConstants');
+const { USER_EXIST, USER_NOT_EXIST, LOGIN_PASSWORD_ERROR, SYS_ERROR } = errorConstant;
 
 const user = {
     test: async (ctx, next) => {
         ctx.response.body = 'Hello World';
     },
-    front_regist: async (ctx, next) => {
-        // console.log('front_regist ctx ->', ctx);
+    regist: async (ctx, next) => {
         utils.setHeaders(ctx);
         const params = ctx.request.body ? ctx.request.body : null;
-        let { flag, data, err } = await store.front_regist(params);
+        let { flag, data, err } = await store.judgeUserExist(params);
         let res = null;
-        if (flag) {
+        if (data.length) {
             res = {
-                code: 0,
                 data: null,
-                message: null
+                ...USER_EXIST,
             };
         } else {
-            res = {
-                code: -1,
-                data: null,
-                message: err
-            };
+            let { flag, data, err } = await store.regist(params);
+            if (flag) {
+                res = {
+                    code: 0,
+                    data: null,
+                    message: null
+                };
+            } else {
+                res = {
+                    data: null,
+                    ...SYS_ERROR,
+                };
+            }
         }
         ctx.response.body = res;
     },
@@ -103,48 +111,53 @@ const user = {
             }
             ctx.response.body = res;
         }, */
-    front_login: async (ctx, next) => {
+    login: async (ctx, next) => {
         utils.setHeaders(ctx);
         const params = ctx.request.body ? ctx.request.body : null;
         let res = null;
-        let { flag, data, err } = await store.back_judgeUserExist(params);
-        if (data.length) {
-            let { flag, data, err } = await store.back_setAccesstoken(data[0]);
-            const { id, phone, accesstoken } = data;
-            if (flag) {
-                res = {
-                    code: 0,
-                    data: {
-                        userId: id,
-                        phone,
-                        accesstoken
-                    }
-                };
+        let { flag, data: judgeUserExistData, err } = await store.judgeUserExist(params);
+        if (judgeUserExistData.length) {
+            let { flag, data: judgeUserPasswordData, err } = await store.judgeUserPassword(params);
+            if (judgeUserPasswordData.length) {
+                let resultData = judgeUserPasswordData[0];
+                let { flag, data: setAccesstokenData, err } = await store.setAccesstoken(resultData);
+                const { accesstoken } = setAccesstokenData;
+                const { password, ...otherParams } = resultData;
+                if (flag) {
+                    res = {
+                        code: 0,
+                        data: {
+                            entity: {
+                                ...otherParams,
+                                accesstoken
+                            }
+                        }
+                    };
+                } else {
+                    res = {
+                        data: null,
+                        ...SYS_ERROR,
+                    };
+                }
             } else {
                 res = {
-                    code: -1,
-                    data: {
-                        entities: null,
-                        total: null
-                    },
-                    message: err
+                    data: null,
+                    ...LOGIN_PASSWORD_ERROR,
                 };
             }
-
         } else {
             res = {
-                code: -1,
                 data: null,
-                message: "账号不存在或账号密码错误！"
+                ...USER_NOT_EXIST,
             };
         }
 
         ctx.response.body = res;
     },
-    front_logout: async (ctx, next) => {
+    logout: async (ctx, next) => {
         utils.setHeaders(ctx);
         const params = ctx.request.body ? ctx.request.body : null;
-        let { flag, data, err } = await store.back_clearAccesstoken(params);
+        let { flag, err } = await store.back_clearAccesstoken(params);
         let res = null;
         if (flag) {
             res = {
@@ -154,9 +167,8 @@ const user = {
             };
         } else {
             res = {
-                code: -1,
                 data: null,
-                message: err
+                ...SYS_ERROR,
             };
         }
         ctx.response.body = res;
@@ -167,9 +179,9 @@ const user = {
 module.exports = {
     'GET /test': user.test,
     // 'POST /rabbit/user/back_update_id': user.back_update_id,
-    'POST /rabbitApi/user/front_regist': user.front_regist,
+    'POST /rabbitApi/user/regist': user.regist,
     // 'POST /rabbit/user/back_batch_delete': user.back_batch_delete,
-    'POST /rabbitApi/user/front_login': user.front_login,
-    'POST /rabbitApi/user/front_logout': user.front_logout
+    'POST /rabbitApi/user/login': user.login,
+    'POST /rabbitApi/user/logout': user.logout
 };
 

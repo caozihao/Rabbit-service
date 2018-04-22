@@ -25,9 +25,13 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     updatedTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     PRIMARY KEY (id));`;
 
+
 // const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET  lastLoginTime=? WHERE id = ?`;
 
-const SQL_JUDGE_EXIST = `SELECT * FROM ${TABLE_NAME} WHERE phone = ? AND password = ?`;
+
+const SQL_JUDGE_USER_EXIST = `SELECT * FROM ${TABLE_NAME} WHERE phone = ?`;
+
+const SQL_JUDGE_LOGIN_PASSWORD = `SELECT * FROM ${TABLE_NAME} WHERE phone = ? AND password = ?`;
 
 const SQL_GET_PAGE_NO_FILTER = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime DESC LIMIT ? , ?`;
 
@@ -60,7 +64,7 @@ class MySqlStore {
         });
     }
     //添加一条数据
-    front_regist(params) {
+    regist(params) {
         return new Promise((resolve, reject) => {
             let { phone, nickname, password } = params;
             const accesstoken = "";
@@ -71,7 +75,7 @@ class MySqlStore {
                         resolve({ flag: true });
                     } else {
                         reject({ flag: false, err });
-                        console.log("front_regist error->", err);
+                        console.log("regist error->", err);
                     }
                     connection.release();
                 });
@@ -193,18 +197,17 @@ class MySqlStore {
     // }
 
     //判断是否存在
-    back_judgeAdminExist(params) {
+    judgeUserPassword(params) {
         return new Promise((resolve, reject) => {
             let { phone, password } = params;
             password = utils.md5(password);
-
             pool.getConnection((err, connection) => {
-                connection.query(SQL_JUDGE_EXIST, [phone, password], (err, data) => {
+                connection.query(SQL_JUDGE_LOGIN_PASSWORD, [phone, password], (err, data) => {
                     if (!err) {
                         resolve({ flag: true, data });
                     } else {
                         reject({ flag: false, err });
-                        console.log("back_judgeAdminExist error->", err);
+                        console.log("judgeUserExist error->", err);
                     }
 
                     connection.release();
@@ -212,8 +215,25 @@ class MySqlStore {
             });
         });
     }
+
+    judgeUserExist(params) {
+        return new Promise((resolve, reject) => {
+            let { phone } = params;
+            pool.getConnection((err, connection) => {
+                connection.query(SQL_JUDGE_USER_EXIST, [phone], (err, data) => {
+                    if (!err) {
+                        resolve({ flag: true, data });
+                    } else {
+                        reject({ flag: false, err });
+                        console.log("SQL_JUDGE_USER_EXIST error->", err);
+                    }
+                    connection.release();
+                });
+            });
+        });
+    }
     //设置accesstoekn
-    back_setAccesstoken(params) {
+    setAccesstoken(params) {
         return new Promise((resolve, reject) => {
             const { id } = params;
             const lastLoginTime = new Date().getTime();
@@ -227,7 +247,7 @@ class MySqlStore {
                         resolve({ flag: true, data: params });
                     } else {
                         reject({ flag: false, err });
-                        console.log("back_setAccesstoken error->", err);
+                        console.log("setAccesstoken error->", err);
                     }
 
                     connection.release();
@@ -243,7 +263,7 @@ class MySqlStore {
             pool.getConnection((err, connection) => {
                 connection.query(SQL_CLEAR_ACCESSTOKEN, [id], (err) => {
                     if (!err) {
-                        resolve({ flag: true, data });
+                        resolve({ flag: true });
                     } else {
                         reject({ flag: false, err });
                         console.log("back_clearAccesstoken error->", err);

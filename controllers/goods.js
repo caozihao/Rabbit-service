@@ -9,15 +9,17 @@ const store = new goodsMySqlStore('./dbSqllite/goods.db');
 const utils = require('./../utils/utils');
 const fetch = require('node-fetch');
 const config = require('../config');
+const errorConstant = require('./../errorConstants');
+const { USER_EXIST, USER_NOT_EXIST, LOGIN_PASSWORD_ERROR, SYS_ERROR } = errorConstant;
 
 const goods = {
-    back_get_page: async (ctx, next) => {
+    getListByOffset: async (ctx, next) => {
         utils.setHeaders(ctx);
         let queryParams = ctx.request.query ? ctx.request.query : null;
-        queryParams.interface = "/rabbit/goods/back_get_page";
+        queryParams.interface = "/rabbit/goods/getListByOffset";
         let res = null;
-        let { flag, data, err } = await store.back_get_page(queryParams);
-        let cnt = await store.back_get_all_count(queryParams);
+        let { flag, data, err } = await store.getListByOffset(queryParams);
+        let cnt = await store.getAllCount(queryParams);
         let { cnt: total } = cnt[0];
         if (flag) {
             res = {
@@ -28,7 +30,11 @@ const goods = {
                 },
                 message: null
             };
-
+        } else {
+            res = {
+                data: null,
+                ...SYS_ERROR,
+            };
         }
         ctx.response.body = res;
     },
@@ -39,7 +45,7 @@ const goods = {
     //     queryParams.pageSize = queryParams.limit;
     //     let { flag, data, err } = await store.back_get_page(queryParams);
     //     let res = null;
-    //     let cnt = await store.back_get_all_count(queryParams);
+    //     let cnt = await store.getAllCount(queryParams);
     //     let { cnt: total } = cnt[0];
 
     //     if (flag) {
@@ -63,12 +69,11 @@ const goods = {
     //     }
     //     ctx.response.body = res;
     // },
-    back_get_id: async (ctx, next) => {
+    getById: async (ctx, next) => {
         utils.setHeaders(ctx);
         const queryParams = ctx.request.query ? ctx.request.query : null;
-        queryParams.interface = "/rabbit/goods/back_get_id";
         let res = null;
-        let { flag, data, err } = await store.back_get_id(queryParams);
+        let { flag, data, err } = await store.getById(queryParams);
         if (flag) {
             res = {
                 code: 0,
@@ -79,12 +84,8 @@ const goods = {
             };
         } else {
             res = {
-                code: -1,
-                data: {
-                    entities: null,
-                    total: null
-                },
-                message: err
+                data: null,
+                ...SYS_ERROR,
             };
         }
         ctx.response.body = res;
@@ -114,12 +115,12 @@ const goods = {
     //     }
     //     ctx.response.body = res;
     // },
-    // back_batch_delete: async (ctx, next) => {
+    // batchDeleteByIds: async (ctx, next) => {
     //     utils.setHeaders(ctx);
     //     const params = ctx.request.body ? ctx.request.body : null;
-    //     params.interface = "/rabbit/goods/back_batch_delete";
+    //     params.interface = "/rabbit/goods/batchDeleteByIds";
     //     let res = null;
-    //     let { flag, data, err } = await store.back_batch_delete(params);
+    //     let { flag, data, err } = await store.batchDeleteByIds(params);
     //     if (flag) {
     //         res = {
     //             code: 0,
@@ -136,13 +137,12 @@ const goods = {
 
     //     ctx.response.body = res;
     // },
-    back_add: async (ctx, next) => {
+    create: async (ctx, next) => {
         utils.setHeaders(ctx);
         const params = ctx.request.body ? ctx.request.body : null;
-        params.interface = "/rabbit/goods/back_add";
         let res = null;
 
-        let { flag, data, err } = await store.back_add(params);
+        let { flag, err } = await store.create(params);
         if (flag) {
             res = {
                 code: 0,
@@ -151,20 +151,19 @@ const goods = {
             };
         } else {
             res = {
-                code: -1,
                 data: null,
-                message: err
+                ...SYS_ERROR,
             };
         }
         ctx.response.body = res;
     },
-    // back_update_id: async (ctx, next) => {
+    // updateById: async (ctx, next) => {
     //     utils.setHeaders(ctx);
     //     const params = ctx.request.body ? ctx.request.body : null;
-    //     params.interface = "/rabbit/goods/back_update_id";
+    //     params.interface = "/rabbit/goods/updateById";
     //     let res = null;
 
-    //     let { flag, data, err } = await store.back_update_id(params);
+    //     let { flag, data, err } = await store.updateById(params);
 
     //     if (flag) {
     //         res = {
@@ -241,11 +240,11 @@ module.exports = {
     // 'GET /rabbit/goods/front_get_page_previous': goods.front_get_page_previous,
     // 'GET /rabbit/goods/front_get_page_next': goods.front_get_page_next,
 
-    'GET /rabbitApi/goods/back_get_page': goods.back_get_page,
-    'GET /rabbitApi/goods/back_get_id': goods.back_get_id,
-    // 'POST /rabbit/goods/back_batch_delete': goods.back_batch_delete,
-    'POST /rabbitApi/goods/back_add': goods.back_add,
-    // 'POST /rabbit/goods/back_update_id': goods.back_update_id
+    'GET /rabbitApi/goods/getListByOffset': goods.getListByOffset,
+    'GET /rabbitApi/goods/getById': goods.getById,
+    // 'POST /rabbit/goods/batchDeleteByIds': goods.batchDeleteByIds,
+    'POST /rabbitApi/goods/create': goods.create,
+    // 'POST /rabbit/goods/updateById': goods.updateById
 
 
 };
