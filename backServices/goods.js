@@ -151,16 +151,24 @@ class MySqlStore {
     //获取所有数据的数量
     getAllCount(params) {
         return new Promise((resolve, reject) => {
-            const { palce, type, startTime, endTime } = params;
-            let SQL_GET_COUNT = SQL_GET_COUNT_NO_FILTER;
-            // console.log("getAllCount filterUserName ->",filterUserName);
-
+            let { place, category, type, startTime, endTime } = params;
+            // let SQL_GET_COUNT = SQL_GET_COUNT_NO_FILTER;
+            let palceSQL = '';
+            let categorySQL = '';
+            let createdTimeSQL = '';
             if (place) {
-                SQL_GET_PAGE = `SELECT count(*) as cnt  FROM ${TABLE_NAME} 
-                WHERE place LIKE '%${place}%' 
-                AND type = ?
-                AND createdTime BETWEEN startTime AND endTime`;
+                palceSQL = `AND place LIKE '%${place}%'`;
             }
+
+            if (category && category !== '-1') {
+                categorySQL = `AND category = '${category}'`;
+            }
+
+            if (startTime && endTime) {
+                createdTimeSQL = `AND createdTime BETWEEN '${startTime}' AND '${endTime}'`;
+            }
+
+            const SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL}`;
 
             //查询数据的数量
             pool.getConnection((err, connection) => {
@@ -180,22 +188,32 @@ class MySqlStore {
     //分页查询数据
     getListByOffset(params) {
         return new Promise((resolve, reject) => {
-            let { pageNo: offset, pageSize: limit, place, type, startTime, endTime } = params;
-
-            let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
+            let { pageNo: offset, pageSize: limit, place, category, type, startTime, endTime } = params;
+            // let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
+            console.log('getListByOffset params ->', params);
+            let palceSQL = '';
+            let categorySQL = '';
+            let createdTimeSQL = '';
             if (place) {
-                SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} 
-                WHERE place LIKE '%${place}%' 
-                AND type = ?
-                AND createdTime BETWEEN startTime AND endTime
-                ORDER BY updatedTime DESC
-                LIMIT ? , ?`;
+                palceSQL = `AND place LIKE '%${place}%'`;
             }
+
+            if (category && category !== '-1') {
+                categorySQL = `AND category = '${category}'`;
+            }
+
+            if (startTime && endTime) {
+                createdTimeSQL = `AND createdTime BETWEEN '${startTime}' AND '${endTime}'`;
+            }
+
+            const SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+
+            console.log('getListByOffset SQL_GET_PAGE ->', SQL_GET_PAGE);
             //查询多条
             offset = parseInt(offset);
             limit = parseInt(limit);
             pool.getConnection((err, connection) => {
-                connection.query(SQL_GET_PAGE, [(offset - 1) * limit, limit], function (err, data) {
+                connection.query(SQL_GET_PAGE, (err, data) => {
                     if (!err) {
                         resolve({ flag: true, data });
                     } else {
