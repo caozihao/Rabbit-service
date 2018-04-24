@@ -65,6 +65,7 @@ const getSqlByParams = (params) => {
     let palceSQL = '';
     let categorySQL = '';
     let createdTimeSQL = '';
+
     if (place) {
         palceSQL = `AND place LIKE '%${place}%'`;
     }
@@ -80,8 +81,18 @@ const getSqlByParams = (params) => {
     offset = parseInt(offset);
     limit = parseInt(limit);
 
-    const SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
-    const SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL}`;
+    let SQL_GET_PAGE = '';
+    let SQL_GET_COUNT = '';
+
+    if (!type && !palceSQL && !categorySQL && !createdTimeSQL) {
+        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} `;
+    } else {
+        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL}`;
+    }
+
+
     return {
         SQL_GET_COUNT,
         SQL_GET_PAGE,
