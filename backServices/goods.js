@@ -50,13 +50,44 @@ const SQL_GET_PAGE_NO_FILTER = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime
 
 const SQL_GET_ID = `SELECT * FROM ${TABLE_NAME} WHERE id = ?`;
 
-const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type = ?,category =?, status =?,place =?,imageUrl =?,userId =?,userNickname =?,userPhone=?,articleTitle =?,articleContent = ? WHERE id = ?`;
+const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type=?,articleTitle=?, category=?,imageUrl=?,place=?,articleContent=?,status=?,userId=?,userNickname=?,userPhone=? WHERE id = ?`;
 
-const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type, category,status,place,imageUrl,userId,userNickname,userPhone,articleTitle,articleContent) VALUES (?,?,?,?,?,?,?,?,?,?)`;
+const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type,articleTitle, category,imageUrl,place,articleContent,status,userId,userNickname,userPhone) VALUES (?,?,?,?,?,?,?,?,?,?)`;
 
 const mysql = require('mysql');
 const config = require('../config');
 const pool = mysql.createPool(config.mysql);
+
+
+const getSqlByParams = (params) => {
+    let { pageNo: offset, pageSize: limit, place, category, type, startTime, endTime } = params;
+    // let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
+    let palceSQL = '';
+    let categorySQL = '';
+    let createdTimeSQL = '';
+    if (place) {
+        palceSQL = `AND place LIKE '%${place}%'`;
+    }
+
+    if (category && category !== '-1') {
+        categorySQL = `AND category = '${category}'`;
+    }
+
+    if (startTime && endTime) {
+        createdTimeSQL = `AND createdTime BETWEEN '${startTime}' AND '${endTime}'`;
+    }
+
+    offset = parseInt(offset);
+    limit = parseInt(limit);
+
+    const SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+    const SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL}`;
+    return {
+        SQL_GET_COUNT,
+        SQL_GET_PAGE,
+    }
+}
+
 
 class MySqlStore {
     //初始化
@@ -71,8 +102,12 @@ class MySqlStore {
     //添加一条数据
     create(params) {
         return new Promise((resolve, reject) => {
+            const arr = [];
+            for (let i in params) {
+                arr.push(params[i]);
+            }
             pool.getConnection((err, connection) => {
-                connection.query(SQL_SET, Object.keys(params), (err) => {
+                connection.query(SQL_SET, arr, (err) => {
                     if (!err) {
                         resolve({ flag: true });
                     } else {
@@ -130,10 +165,13 @@ class MySqlStore {
     //根据id更新
     updateById(params) {
         return new Promise((resolve, reject) => {
-
+            const arr = [];
+            for (let i in params) {
+                arr.push(params[i]);
+            }
             //更新数据
             pool.getConnection((err, connection) => {
-                connection.query(SQL_UPDATE_ID, Object.keys(params), (err, data) => {
+                connection.query(SQL_UPDATE_ID, arr, (err, data) => {
                     if (!err) {
                         resolve({ flag: true });
                     } else {
@@ -149,25 +187,7 @@ class MySqlStore {
     //获取所有数据的数量
     getAllCount(params) {
         return new Promise((resolve, reject) => {
-            let { place, category, type, startTime, endTime } = params;
-            // let SQL_GET_COUNT = SQL_GET_COUNT_NO_FILTER;
-            let palceSQL = '';
-            let categorySQL = '';
-            let createdTimeSQL = '';
-            if (place) {
-                palceSQL = `AND place LIKE '%${place}%'`;
-            }
-
-            if (category && category !== '-1') {
-                categorySQL = `AND category = '${category}'`;
-            }
-
-            if (startTime && endTime) {
-                createdTimeSQL = `AND createdTime BETWEEN '${startTime}' AND '${endTime}'`;
-            }
-
-            const SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL}`;
-
+            const { SQL_GET_COUNT } = getSqlByParams(params);
             //查询数据的数量
             pool.getConnection((err, connection) => {
                 connection.query(SQL_GET_COUNT, (err, data) => {
@@ -186,30 +206,8 @@ class MySqlStore {
     //分页查询数据
     getListByOffset(params) {
         return new Promise((resolve, reject) => {
-            let { pageNo: offset, pageSize: limit, place, category, type, startTime, endTime } = params;
-            // let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
-            console.log('getListByOffset params ->', params);
-            let palceSQL = '';
-            let categorySQL = '';
-            let createdTimeSQL = '';
-            if (place) {
-                palceSQL = `AND place LIKE '%${place}%'`;
-            }
+            const { SQL_GET_PAGE } = getSqlByParams(params);
 
-            if (category && category !== '-1') {
-                categorySQL = `AND category = '${category}'`;
-            }
-
-            if (startTime && endTime) {
-                createdTimeSQL = `AND createdTime BETWEEN '${startTime}' AND '${endTime}'`;
-            }
-
-            const SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
-
-            console.log('getListByOffset SQL_GET_PAGE ->', SQL_GET_PAGE);
-            //查询多条
-            offset = parseInt(offset);
-            limit = parseInt(limit);
             pool.getConnection((err, connection) => {
                 connection.query(SQL_GET_PAGE, (err, data) => {
                     if (!err) {
@@ -260,6 +258,7 @@ class MySqlStore {
     //     })
     // }
 }
+
 
 
 module.exports = MySqlStore;
