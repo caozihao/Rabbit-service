@@ -78,7 +78,7 @@ const goods = {
             res = {
                 code: 0,
                 data: {
-                    entities: data
+                    entity: data[0]
                 },
                 message: null
             };

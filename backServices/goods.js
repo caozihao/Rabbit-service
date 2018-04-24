@@ -23,6 +23,7 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
 
                     userId INT NOT NULL,
                     userNickname  VARCHAR(64) NOT NULL,
+                    userPhone VARCHAR(64) NOT NULL,
                     
                     articleTitle VARCHAR(64) NOT NULL,
                     articleReadNum INT,
@@ -49,9 +50,9 @@ const SQL_GET_PAGE_NO_FILTER = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime
 
 const SQL_GET_ID = `SELECT * FROM ${TABLE_NAME} WHERE id = ?`;
 
-const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type = ?,category =?, status =?,place =?,imageUrl =?,userId =?,userNickname =?,articleTitle =?,articleContent = ? WHERE id = ?`;
+const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type = ?,category =?, status =?,place =?,imageUrl =?,userId =?,userNickname =?,userPhone=?,articleTitle =?,articleContent = ? WHERE id = ?`;
 
-const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type, category,status,place,imageUrl,userId,userNickname,articleTitle,articleContent) VALUES (?, ?, ?, ?,?,?,?,?,?)`;
+const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type, category,status,place,imageUrl,userId,userNickname,userPhone,articleTitle,articleContent) VALUES (?,?,?,?,?,?,?,?,?,?)`;
 
 const mysql = require('mysql');
 const config = require('../config');
@@ -70,10 +71,8 @@ class MySqlStore {
     //添加一条数据
     create(params) {
         return new Promise((resolve, reject) => {
-            const { type, category, status, place, imageUrl, userId, userNickname, articleTitle, articleContent } = params;
-
             pool.getConnection((err, connection) => {
-                connection.query(SQL_SET, [type, category, status, place, imageUrl, userId, userNickname, articleTitle, articleContent], (err) => {
+                connection.query(SQL_SET, Object.keys(params), (err) => {
                     if (!err) {
                         resolve({ flag: true });
                     } else {
@@ -131,11 +130,10 @@ class MySqlStore {
     //根据id更新
     updateById(params) {
         return new Promise((resolve, reject) => {
-            const { type, category, status, place, imageUrl, userId, userNickname, articleTitle, articleContent, id } = params;
-            //更新数据
 
+            //更新数据
             pool.getConnection((err, connection) => {
-                connection.query(SQL_UPDATE_ID, [type, category, status, place, imageUrl, userId, userNickname, articleTitle, articleContent, id], (err, data) => {
+                connection.query(SQL_UPDATE_ID, Object.keys(params), (err, data) => {
                     if (!err) {
                         resolve({ flag: true });
                     } else {
