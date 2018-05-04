@@ -19,7 +19,7 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     category INT NOT NULL,
                     status INT NOT NULL,
                     place  VARCHAR(64) NOT NULL,
-                    imageUrl VARCHAR(64),
+                    uploadFilename VARCHAR(64),
 
                     userId INT NOT NULL,
                     userNickname  VARCHAR(64) NOT NULL,
@@ -50,9 +50,9 @@ const SQL_GET_PAGE_NO_FILTER = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime
 
 const SQL_GET_ID = `SELECT * FROM ${TABLE_NAME} WHERE id = ?`;
 
-const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type=?,articleTitle=?, category=?,imageUrl=?,place=?,articleContent=?,status=?,userId=?,userNickname=?,userPhone=? WHERE id = ?`;
+const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type=?,articleTitle=?, category=?,place=?,articleContent=?,status=?,userId=?,userNickname=?,userPhone=? ,uploadFilename=? WHERE id = ?`;
 
-const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type,articleTitle, category,imageUrl,place,articleContent,status,userId,userNickname,userPhone) VALUES (?,?,?,?,?,?,?,?,?,?)`;
+const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type,articleTitle, category,place,articleContent,status,userId,userNickname,userPhone,uploadFilename) VALUES (?,?,?,?,?,?,?,?,?,?)`;
 
 const mysql = require('mysql');
 const config = require('../config');
