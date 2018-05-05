@@ -17,7 +17,7 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     id INT(11) NOT NULL AUTO_INCREMENT,
                     type VARCHAR(64) NOT NULL,
                     category INT NOT NULL,
-                    status INT NOT NULL,
+                    status INT NOT NULL DEFAULT '1',
                     place  VARCHAR(64) NOT NULL,
                     uploadFilename VARCHAR(64),
 
@@ -26,8 +26,8 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     userPhone VARCHAR(64) NOT NULL,
                     
                     articleTitle VARCHAR(64) NOT NULL,
-                    articleReadNum INT,
-                    articleContent  TEXT(64),
+                    articleReadNum INT(11),
+                    articleContent TEXT,
 
                     createdTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updatedTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -50,9 +50,9 @@ const SQL_GET_PAGE_NO_FILTER = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime
 
 const SQL_GET_ID = `SELECT * FROM ${TABLE_NAME} WHERE id = ?`;
 
-const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type=?,articleTitle=?, category=?,place=?,articleContent=?,status=?,userId=?,userNickname=?,userPhone=? ,uploadFilename=? WHERE id = ?`;
+const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type=?,articleTitle=?, category=?,place=?,articleContent=?,userId=?,userNickname=?,userPhone=? ,uploadFilename=? WHERE id = ?`;
 
-const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type,articleTitle, category,place,articleContent,status,userId,userNickname,userPhone,uploadFilename) VALUES (?,?,?,?,?,?,?,?,?,?)`;
+const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type,articleTitle, category,place,articleContent,userId,userNickname,userPhone,uploadFilename) VALUES (?,?,?,?,?,?,?,?,?)`;
 
 const mysql = require('mysql');
 const config = require('../config');
@@ -117,6 +117,8 @@ class MySqlStore {
             for (let i in params) {
                 arr.push(params[i]);
             }
+
+            console.log('arr ->', arr);
             pool.getConnection((err, connection) => {
                 connection.query(SQL_SET, arr, (err) => {
                     if (!err) {

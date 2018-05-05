@@ -18,6 +18,7 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     id INT(11) NOT NULL AUTO_INCREMENT,
                     nickname VARCHAR(64) NOT NULL,
                     phone VARCHAR(64) NOT NULL,
+                   status INT NOT NULL DEFAULT '1',
                     password VARCHAR(64) NOT NULL,
                     accesstoken VARCHAR(64),
                     lastLoginTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

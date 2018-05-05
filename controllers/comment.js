@@ -4,15 +4,15 @@
  * @Date:2017/5/8
  * @Time:14:26
  */
-const goodsMySqlStore = require('./../backServices/goods');
-const store = new goodsMySqlStore('./dbSqllite/goods.db');
+const commentMySqlStore = require('./../backServices/comment');
+const store = new commentMySqlStore('./dbSqllite/comment.db');
 const utils = require('./../utils/utils');
 const fetch = require('node-fetch');
 const config = require('../config');
 const errorConstant = require('./../errorConstants');
 const { USER_EXIST, USER_NOT_EXIST, LOGIN_PASSWORD_ERROR, SYS_ERROR } = errorConstant;
 
-const goods = {
+const comment = {
     getListByOffset: async (ctx, next) => {
         utils.setHeaders(ctx);
         let queryParams = ctx.request.query ? ctx.request.query : null;
@@ -26,27 +26,6 @@ const goods = {
                 data: {
                     entities: data,
                     total
-                },
-                message: null
-            };
-        } else {
-            res = {
-                data: null,
-                ...SYS_ERROR,
-            };
-        }
-        ctx.response.body = res;
-    },
-    getById: async (ctx, next) => {
-        utils.setHeaders(ctx);
-        const queryParams = ctx.request.query ? ctx.request.query : null;
-        let res = null;
-        let { flag, data, err } = await store.getById(queryParams);
-        if (flag) {
-            res = {
-                code: 0,
-                data: {
-                    entity: data[0]
                 },
                 message: null
             };
@@ -122,63 +101,16 @@ const goods = {
 
     //     ctx.response.body = res;
     // },
-    // front_get_page_previous: async (ctx, next) => {
-    //     utils.setHeaders(ctx);
-    //     const queryParams = ctx.request.query ? ctx.request.query : null;
-    //     let { flag, data, err } = await store.front_get_page_previous(queryParams);
-    //     let res = null;
-    //     if (flag) {
-    //         res = {
-    //             code: 0,
-    //             data: {
-    //                 entities: data
-    //             },
-    //             message: null
-    //         };
-    //     } else {
-    //         res = {
-    //             code: -1,
-    //             data: {
-    //                 entities: null,
-    //                 total: null
-    //             },
-    //             message: err
-    //         };
-    //     }
-    //     ctx.response.body = res;
-    // },
-    // front_get_page_next: async (ctx, next) => {
-    //     utils.setHeaders(ctx);
-    //     const queryParams = ctx.request.query ? ctx.request.query : null;
-    //     let { flag, data, err } = await store.front_get_page_next(queryParams);
-    //     let res = null;
-
-    //     if (flag) {
-    //         res = {
-    //             code: 0,
-    //             data: {
-    //                 entities: data
-    //             },
-    //             message: null
-    //         };
-    //     } else {
-    //         res = {
-    //             code: -1,
-    //             data: {
-    //                 entities: null,
-    //                 total: null
-    //             },
-    //             message: err
-    //         };
-    //     }
-    //     ctx.response.body = res;
-    // }
 };
 
 module.exports = {
-    'GET /rabbitApi/goods/getListByOffset': goods.getListByOffset,
-    'GET /rabbitApi/goods/getById': goods.getById,
-    'POST /rabbitApi/goods/create': goods.create,
-
+    // 'GET /rabbit/comment/front_get_page': comment.front_get_page,
+    // 'GET /rabbit/comment/front_get_id': comment.front_get_id,
+    // 'GET /rabbit/comment/front_get_page_previous': comment.front_get_page_previous,
+    // 'GET /rabbit/comment/front_get_page_next': comment.front_get_page_next,
+    'GET /rabbitApi/comment/getListByOffset': comment.getListByOffset,
+    // 'POST /rabbit/comment/batchDeleteByIds': comment.batchDeleteByIds,
+    'POST /rabbitApi/comment/create': comment.create,
+    // 'POST /rabbit/comment/updateById': comment.updateById
 
 };
