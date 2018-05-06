@@ -55,6 +55,45 @@ const mysql = require('mysql');
 const config = require('../config');
 const pool = mysql.createPool(config.mysql);
 
+
+
+
+const getSqlByParams = (params) => {
+    let { pageNo: offset, pageSize: limit, nickname, phone } = params;
+    // let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
+    let nicknameSQL = '';
+    let phoneSQL = '';
+
+    if (nickname) {
+        nicknameSQL = `AND nickname LIKE '%${nickname}%'`;
+    }
+
+    if (phone) {
+        phoneSQL = `AND phone LIKE '%${phone}%'`;
+    }
+
+    offset = parseInt(offset);
+    limit = parseInt(limit);
+
+    let SQL_GET_PAGE = '';
+    let SQL_GET_COUNT = '';
+
+    if (!nickname && !phone) {
+        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} `;
+    } else {
+        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  1 = 1 ${nicknameSQL} ${phoneSQL}  ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE  1 = 1 ${nicknameSQL} ${phoneSQL}`;
+    }
+
+
+    return {
+        SQL_GET_COUNT,
+        SQL_GET_PAGE,
+    }
+}
+
+
 class MySqlStore {
     //初始化
     constructor() {
@@ -64,6 +103,9 @@ class MySqlStore {
             })
         });
     }
+
+
+
     //添加一条数据
     regist(params) {
         return new Promise((resolve, reject) => {
@@ -139,63 +181,43 @@ class MySqlStore {
     //     });
     // }
 
-    // //获取所有数据的数量
-    // back_get_all_count(params) {
-    //     return new Promise((resolve, reject) => {
-    //         const { filterUserName } = params;
-    //         let SQL_GET_COUNT = SQL_GET_COUNT_NO_FILTER;
-    //         // console.log("back_get_all_count filterUserName ->",filterUserName);
-    //         if (filterUserName) {
-    //             SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME}
-    //             WHERE phone LIKE '%${filterUserName}%'`;
-    //         }
+    //分页查询数据
+    getListByOffset(params) {
+        return new Promise((resolve, reject) => {
+            const { SQL_GET_PAGE } = getSqlByParams(params);
 
-    //         pool.getConnection((err, connection) => {
-    //             //查询数据的数量
-    //             connection.query(SQL_GET_COUNT, (err, data) => {
-    //                 if (!err) {
-    //                     resolve({ flag: true });
-    //                 } else {
-    //                     reject({ flag: false, err });
-    //                     console.log("back_get_all_count error->", err);
-    //                 }
+            pool.getConnection((err, connection) => {
+                connection.query(SQL_GET_PAGE, (err, data) => {
+                    if (!err) {
+                        resolve({ flag: true, data });
+                    } else {
+                        reject({ flag: false, err });
+                    }
+                    connection.release();
+                });
+            });
 
-    //                 connection.release();
-    //             });
-    //         });
+        })
+    }
 
-    //     })
-    // }
-
-    // //分页查询数据
-    // back_get_page(params) {
-    //     return new Promise((resolve, reject) => {
-    //         let { pageNo: offset, pageSize: limit, filterUserName } = params;
-    //         let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
-    //         if (filterUserName) {
-    //             SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} 
-    //         WHERE phone LIKE '%${filterUserName}%'   
-    //         ORDER BY updatedTime DESC
-    //         LIMIT ? , ?`;
-    //         }
-    //         //查询多条
-    //         offset = parseInt(offset);
-    //         limit = parseInt(limit);
-
-    //         pool.getConnection((err, connection) => {
-    //             connection.query(SQL_GET_PAGE, [(offset - 1) * limit, limit], function (err, data) {
-    //                 if (!err) {
-    //                     resolve({ flag: true });
-    //                 } else {
-    //                     reject({ flag: false, err });
-    //                 }
-
-    //                 connection.release();
-    //             });
-    //         });
-
-    //     })
-    // }
+    //获取所有数据的数量
+    getAllCount(params) {
+        return new Promise((resolve, reject) => {
+            const { SQL_GET_COUNT } = getSqlByParams(params);
+            //查询数据的数量
+            pool.getConnection((err, connection) => {
+                connection.query(SQL_GET_COUNT, (err, data) => {
+                    if (!err) {
+                        resolve(data);
+                    } else {
+                        reject({ flag: false, err });
+                        console.log("getAllCount error->", err);
+                    }
+                    connection.release();
+                });
+            });
+        })
+    }
 
     //判断是否存在
     judgeUserPassword(params) {

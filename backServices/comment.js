@@ -38,8 +38,16 @@ const getSqlByParams = (params) => {
     offset = parseInt(offset);
     limit = parseInt(limit);
 
-    let SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  goodsId = '${goodsId}' ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
-    let SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE goodsId = '${goodsId}'`;
+    let SQL_GET_PAGE = '';
+    let SQL_GET_COUNT = '';
+
+    if (goodsId) {
+        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  goodsId = '${goodsId}' ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE goodsId = '${goodsId}'`;
+    } else {
+        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME}  ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME}`;
+    }
 
     return {
         SQL_GET_COUNT,

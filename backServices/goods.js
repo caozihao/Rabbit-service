@@ -62,6 +62,8 @@ const pool = mysql.createPool(config.mysql);
 const getSqlByParams = (params) => {
     let { pageNo: offset, pageSize: limit, place, category, type, startTime, endTime } = params;
     // let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
+
+    console.log('params ->', params);
     let palceSQL = '';
     let categorySQL = '';
     let createdTimeSQL = '';
