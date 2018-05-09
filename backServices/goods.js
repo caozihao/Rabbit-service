@@ -17,7 +17,7 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     id INT(11) NOT NULL AUTO_INCREMENT,
                     type VARCHAR(64) NOT NULL,
                     category INT NOT NULL,
-                    status INT NOT NULL DEFAULT '1',
+                    status INT NOT NULL DEFAULT '1',  
                     place  VARCHAR(64) NOT NULL,
                     uploadFilename VARCHAR(64),
 
@@ -26,7 +26,7 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     userPhone VARCHAR(64) NOT NULL,
                     
                     articleTitle VARCHAR(64) NOT NULL,
-                    articleReadNum INT(11),
+                    articleReadNum INT(11) DEFAULT 0 ,
                     articleContent TEXT,
 
                     createdTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -52,6 +52,8 @@ const SQL_GET_ID = `SELECT * FROM ${TABLE_NAME} WHERE id = ?`;
 
 const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type=?,articleTitle=?, category=?,place=?,articleContent=?,userId=?,userNickname=?,userPhone=? ,uploadFilename=? WHERE id = ?`;
 
+const SQL_UPDATE_READNUM_ID = `UPDATE ${TABLE_NAME} SET articleReadNum = articleReadNum + 1 WHERE id = ?`;
+
 const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type,articleTitle, category,place,articleContent,userId,userNickname,userPhone,uploadFilename) VALUES (?,?,?,?,?,?,?,?,?)`;
 
 const mysql = require('mysql');
@@ -62,8 +64,6 @@ const pool = mysql.createPool(config.mysql);
 const getSqlByParams = (params) => {
     let { pageNo: offset, pageSize: limit, place, category, type, startTime, endTime } = params;
     // let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
-
-    console.log('params ->', params);
     let palceSQL = '';
     let categorySQL = '';
     let createdTimeSQL = '';
@@ -120,7 +120,6 @@ class MySqlStore {
                 arr.push(params[i]);
             }
 
-            console.log('arr ->', arr);
             pool.getConnection((err, connection) => {
                 connection.query(SQL_SET, arr, (err) => {
                     if (!err) {
@@ -198,6 +197,26 @@ class MySqlStore {
             });
         })
     }
+
+    //更新阅读数
+    updateReadNumById(params) {
+        return new Promise((resolve, reject) => {
+            const { id } = params
+            //更新数据
+            pool.getConnection((err, connection) => {
+                connection.query(SQL_UPDATE_READNUM_ID, [id], (err, data) => {
+                    if (!err) {
+                        resolve({ flag: true });
+                    } else {
+                        reject({ flag: false, err });
+                        console.log("updateById error->", err);
+                    }
+                    connection.release();
+                });
+            });
+        })
+    }
+
 
     //获取所有数据的数量
     getAllCount(params) {

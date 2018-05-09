@@ -99,6 +99,25 @@ const goods = {
         }
         ctx.response.body = res;
     },
+    updateReadNumById: async (ctx, next) => {
+        utils.setHeaders(ctx);
+        const params = ctx.request.body ? ctx.request.body : null;
+        let res = null;
+        let { flag, err } = await store.updateReadNumById(params);
+        if (flag) {
+            res = {
+                code: 0,
+                data: null,
+                message: null
+            };
+        } else {
+            res = {
+                data: null,
+                ...SYS_ERROR,
+            };
+        }
+        ctx.response.body = res;
+    },
     // updateById: async (ctx, next) => {
     //     utils.setHeaders(ctx);
     //     const params = ctx.request.body ? ctx.request.body : null;
@@ -179,6 +198,6 @@ module.exports = {
     'GET /rabbitApi/goods/getListByOffset': goods.getListByOffset,
     'GET /rabbitApi/goods/getById': goods.getById,
     'POST /rabbitApi/goods/create': goods.create,
-
+    'POST /rabbitApi/goods/updateReadNumById': goods.updateReadNumById,
 
 };
