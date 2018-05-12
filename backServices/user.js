@@ -50,12 +50,12 @@ const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET phone = ?   WHERE id = ?`;
 
 const SQL_MODIFY_PASSWORD = `UPDATE ${TABLE_NAME} SET password = ?   WHERE id = ?`;
 
+const SQL_BATCH_UPDATE_STATUS = `UPDATE ${TABLE_NAME} SET status = ?  WHERE id in (?)`;
+
 const utils = require('./../utils/utils');
 const mysql = require('mysql');
 const config = require('../config');
 const pool = mysql.createPool(config.mysql);
-
-
 
 
 const getSqlByParams = (params) => {
@@ -103,8 +103,6 @@ class MySqlStore {
         });
     }
 
-
-
     //添加一条数据
     regist(params) {
         return new Promise((resolve, reject) => {
@@ -125,37 +123,24 @@ class MySqlStore {
         });
     }
 
-    // //根据id更新
-    // back_update_id(params) {
-    //     return new Promise((resolve, reject) => {
-    //         let { id, phone, password } = params;
-    //         let sqlQuery = "";
-    //         let queryArr = [];
-    //         if (phone) {
-    //             sqlQuery = SQL_UPDATE_ID;
-    //             queryArr = [phone, id];
-    //         } else if (password) {
-    //             password = utils.md5(password);
-    //             sqlQuery = SQL_MODIFY_PASSWORD;
-    //             queryArr = [password, id];
-    //         }
+    batchUpdateStatusByIds(params) {
+        return new Promise((resolve, reject) => {
+            let { ids, status } = params;
+            // ids = "(" + ids + ")";
+            pool.getConnection((err, connection) => {
+                connection.query(SQL_BATCH_UPDATE_STATUS, [status, ids], (err) => {
+                    if (!err) {
+                        resolve({ flag: true });
+                    } else {
+                        reject({ flag: false, err });
+                        console.log("BatchUpdateStatusById error->", err);
+                    }
+                    connection.release()
+                });
+            });
 
-    //         pool.getConnection((err, connection) => {
-    //             //更新数据
-    //             connection.query(sqlQuery, queryArr, (err, data) => {
-    //                 if (!err) {
-    //                     resolve({ flag: true });
-    //                 } else {
-    //                     reject({ flag: false, err });
-    //                     console.log("back_update_id error->", err);
-    //                 }
-
-    //                 connection.release();
-    //             });
-
-    //         });
-    //     })
-    // }
+        });
+    }
 
     // //批量删除
     // back_batch_delete(params) {
@@ -184,7 +169,6 @@ class MySqlStore {
     getListByOffset(params) {
         return new Promise((resolve, reject) => {
             const { SQL_GET_PAGE } = getSqlByParams(params);
-
             pool.getConnection((err, connection) => {
                 connection.query(SQL_GET_PAGE, (err, data) => {
                     if (!err) {
@@ -278,7 +262,7 @@ class MySqlStore {
         });
     }
     //清空
-    back_clearAccesstoken(params) {
+    clearAccesstoken(params) {
         return new Promise((resolve, reject) => {
             const { id } = params;
 
@@ -288,7 +272,7 @@ class MySqlStore {
                         resolve({ flag: true });
                     } else {
                         reject({ flag: false, err });
-                        console.log("back_clearAccesstoken error->", err);
+                        console.log("clearAccesstoken error->", err);
                     }
 
                     connection.release();

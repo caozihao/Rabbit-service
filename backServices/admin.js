@@ -259,7 +259,7 @@ class MySqlStore {
         });
     }
     //清空
-    back_clearAccesstoken(params) {
+    clearAccesstoken(params) {
         return new Promise((resolve, reject) => {
             const { id } = params;
 
@@ -269,7 +269,7 @@ class MySqlStore {
                         resolve({ flag: true });
                     } else {
                         reject({ flag: false, err });
-                        console.log("back_clearAccesstoken error->", err);
+                        console.log("clearAccesstoken error->", err);
                     }
 
                     connection.release();

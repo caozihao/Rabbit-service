@@ -26,7 +26,7 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     userPhone VARCHAR(64) NOT NULL,
                     
                     articleTitle VARCHAR(64) NOT NULL,
-                    articleReadNum INT(11) DEFAULT 0 ,
+                    articleReadNum INT(11) DEFAULT 1 ,
                     articleContent TEXT,
 
                     createdTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

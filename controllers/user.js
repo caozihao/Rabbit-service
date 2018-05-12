@@ -41,27 +41,26 @@ const user = {
         }
         ctx.response.body = res;
     },
-    /*     back_update_id: async (ctx, next) => {
-            utils.setHeaders(ctx);
-            const params = ctx.request.body ? ctx.request.body : null;
-    
-            let { flag, data, err } = await store.back_update_id(params);
-            let res = null;
-            if (flag) {
-                res = {
-                    code: 0,
-                    data: null,
-                    message: null
-                };
-            } else {
-                res = {
-                    code: -1,
-                    data: null,
-                    message: err
-                };
-            }
-            ctx.response.body = res;
-        },
+    batchUpdateStatusByIds: async (ctx, next) => {
+        utils.setHeaders(ctx);
+        const params = ctx.request.body ? ctx.request.body : null;
+        let { flag, data, err } = await store.batchUpdateStatusByIds(params);
+        let res = null;
+        if (flag) {
+            res = {
+                code: 0,
+                data: null,
+                message: null
+            };
+        } else {
+            res = {
+                data: null,
+                ...SYS_ERROR,
+            };
+        }
+        ctx.response.body = res;
+    },
+    /*
         back_batch_delete: async (ctx, next) => {
             utils.setHeaders(ctx);
             const params = ctx.request.body ? ctx.request.body : null;
@@ -82,35 +81,31 @@ const user = {
             }
             ctx.response.body = res;
         },
-        back_get_page: async (ctx, next) => {
-            utils.setHeaders(ctx);
-            const queryParams = ctx.request.query ? ctx.request.query : null;
-            let { flag, data, err } = await store.back_get_page(queryParams);
-            let cnt = await store.back_get_all_count(queryParams);
-            let { cnt: total } = cnt[0];
-            let res = null;
-    
-            if (flag) {
-                res = {
-                    code: 0,
-                    data: {
-                        entities: data,
-                        total
-                    },
-                    message: null
-                };
-            } else {
-                res = {
-                    code: -1,
-                    data: {
-                        entities: null,
-                        total: null
-                    },
-                    message: err
-                };
-            }
-            ctx.response.body = res;
-        }, */
+        */
+    getListByOffset: async (ctx, next) => {
+        utils.setHeaders(ctx);
+        const queryParams = ctx.request.query ? ctx.request.query : null;
+        let { flag, data, err } = await store.getListByOffset(queryParams);
+        let cnt = await store.getAllCount(queryParams);
+        let { cnt: total } = cnt[0];
+        let res = null;
+        if (flag) {
+            res = {
+                code: 0,
+                data: {
+                    entities: data,
+                    total
+                },
+                message: null
+            };
+        } else {
+            res = {
+                data: null,
+                ...SYS_ERROR,
+            };
+        }
+        ctx.response.body = res;
+    },
     login: async (ctx, next) => {
         utils.setHeaders(ctx);
         const params = ctx.request.body ? ctx.request.body : null;
@@ -177,10 +172,9 @@ const user = {
 };
 
 module.exports = {
-    'GET /test': user.test,
-    // 'POST /rabbit/user/back_update_id': user.back_update_id,
+    'GET /rabbitApi/user/getListByOffset': user.getListByOffset,
+    'POST /rabbitApi/user/batchUpdateStatusByIds': user.batchUpdateStatusByIds,
     'POST /rabbitApi/user/regist': user.regist,
-    // 'POST /rabbit/user/back_batch_delete': user.back_batch_delete,
     'POST /rabbitApi/user/login': user.login,
     'POST /rabbitApi/user/logout': user.logout
 };
