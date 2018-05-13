@@ -8,7 +8,7 @@ const userMySqlStore = require('./../backServices/user');
 const store = new userMySqlStore('./dbSqllite/user.db');
 const utils = require('./../utils/utils');
 const errorConstant = require('./../errorConstants');
-const { USER_EXIST, USER_NOT_EXIST, LOGIN_PASSWORD_ERROR, SYS_ERROR } = errorConstant;
+const { USER_EXIST, USER_NOT_EXIST, LOGIN_PASSWORD_ERROR, SYS_ERROR, USER_ACCOUNT_IS_BANNED } = errorConstant;
 
 const user = {
     test: async (ctx, next) => {
@@ -112,34 +112,44 @@ const user = {
         let res = null;
         let { flag, data: judgeUserExistData, err } = await store.judgeUserExist(params);
         if (judgeUserExistData.length) {
-            let { flag, data: judgeUserPasswordData, err } = await store.judgeUserPassword(params);
-            if (judgeUserPasswordData.length) {
-                let resultData = judgeUserPasswordData[0];
-                let { flag, data: setAccesstokenData, err } = await store.setAccesstoken(resultData);
-                const { accesstoken } = setAccesstokenData;
-                const { password, ...otherParams } = resultData;
-                if (flag) {
-                    res = {
-                        code: 0,
-                        data: {
-                            entity: {
-                                ...otherParams,
-                                accesstoken
+            const userInfo = judgeUserExistData[0];
+            const { status } = userInfo;
+            if (status === 2) {
+                res = {
+                    data: null,
+                    ...USER_ACCOUNT_IS_BANNED,
+                };
+            } else {
+                let { flag, data: judgeUserPasswordData, err } = await store.judgeUserPassword(params);
+                if (judgeUserPasswordData.length) {
+                    let resultData = judgeUserPasswordData[0];
+                    let { flag, data: setAccesstokenData, err } = await store.setAccesstoken(resultData);
+                    const { accesstoken } = setAccesstokenData;
+                    const { password, ...otherParams } = resultData;
+                    if (flag) {
+                        res = {
+                            code: 0,
+                            data: {
+                                entity: {
+                                    ...otherParams,
+                                    accesstoken
+                                }
                             }
-                        }
-                    };
+                        };
+                    } else {
+                        res = {
+                            data: null,
+                            ...SYS_ERROR,
+                        };
+                    }
                 } else {
                     res = {
                         data: null,
-                        ...SYS_ERROR,
+                        ...LOGIN_PASSWORD_ERROR,
                     };
                 }
-            } else {
-                res = {
-                    data: null,
-                    ...LOGIN_PASSWORD_ERROR,
-                };
             }
+
         } else {
             res = {
                 data: null,

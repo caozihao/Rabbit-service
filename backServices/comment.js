@@ -19,14 +19,19 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     content TEXT NOT NULL,
                     postId INT(11) NOT NULL,
                     postTitle VARCHAR(64) NOT NULL,
-                    userId INT(11) NOT NULL,
                     status INT NOT NULL DEFAULT '1',
+
+                    userId INT(11) NOT NULL,
                     userNickname VARCHAR(64) NOT NULL,
+
+                    publishUserId INT(11) NOT NULL,
+                    publishUserNickname VARCHAR(64) NOT NULL,
+
                     createdTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updatedTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     PRIMARY KEY (id));`;
 
-const SQL_SET = `INSERT INTO ${TABLE_NAME} (content, userId,userNickname,postId,postTitle) VALUES (?, ? ,?, ?,?)`;
+const SQL_SET = `INSERT INTO ${TABLE_NAME} (content, userId,userNickname,postId,postTitle,publishUserId,publishUserNickname) VALUES (?, ? ,?, ?,?,?,?)`;
 const SQL_DELETE_IDS = `DELETE FROM ${TABLE_NAME} WHERE id in ?`;
 const SQL_BATCH_UPDATE_STATUS = `UPDATE ${TABLE_NAME} SET status = ?  WHERE id in (?)`;
 
@@ -36,19 +41,40 @@ const config = require('../config');
 const pool = mysql.createPool(config.mysql);
 
 const getSqlByParams = (params) => {
-    let { pageNo: offset, pageSize: limit, postId } = params;
+    let { pageNo: offset, pageSize: limit, postId, status, postTitle, publishUserNickname, userNickname } = params;
 
     let postIdSQL = '';
+    let postTitleSQL = '';
+    let statusSQL = '';
+    let publishUserNicknameSQL = '';
+    let userNicknameSQL = '';
 
     if (postId) {
         postIdSQL = `AND postId = '${postId}'`;
     }
 
+    if (postTitle) {
+        postTitleSQL = `AND postTitle LIKE '%${postTitle}%'`;
+    }
+
+    if (status) {
+        statusSQL = `AND status= ${status}`;
+    }
+
+    if (userNickname) {
+        userNicknameSQL = `AND userNickname LIKE '%${userNickname}%'`;
+    }
+
+    if (publishUserNickname) {
+        publishUserNicknameSQL = `AND publishUserNickname LIKE '%${publishUserNickname}%'`;
+    }
+
+
     offset = parseInt(offset);
     limit = parseInt(limit);
 
-    let SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE 1=1 ${postIdSQL} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
-    let SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE 1=1 ${postIdSQL}`;
+    let SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE 1=1 ${postIdSQL} ${statusSQL} ${postTitleSQL} ${publishUserNicknameSQL} ${userNicknameSQL} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+    let SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE 1=1 ${postIdSQL} ${statusSQL} ${postTitleSQL}  ${publishUserNicknameSQL} ${userNicknameSQL}`;
 
     return {
         SQL_GET_COUNT,

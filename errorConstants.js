@@ -13,6 +13,10 @@ module.exports = {
     code: 10000103,
     message: '登录密码错误'
   },
+  USER_ACCOUNT_IS_BANNED: {
+    code: 10000104,
+    message: '您的账号被封禁，请联系管理员'
+  },
   SYS_ERROR: {
     code: 10000000,
     message: '系统内部异常'
