@@ -4,11 +4,11 @@
  * @Date:2017/5/8
  * @Time:14:26
  */
-const goodsMySqlStore = require('./../backServices/goods');
+const postMySqlStore = require('./../backServices/post');
 const commentMySqlStore = require('./../backServices/comment');
 const userMySqlStore = require('./../backServices/user');
 
-const goodsStore = new goodsMySqlStore('./dbSqllite/goods.db');
+const postStore = new postMySqlStore('./dbSqllite/post.db');
 const commentStore = new commentMySqlStore('./dbSqllite/comment.db');
 const userStore = new userMySqlStore('./dbSqllite/user.db');
 const utils = require('./../utils/utils');
@@ -26,9 +26,9 @@ const common = {
             pageNo: 1,
             pageSize: 5,
         };
-        let searchCount = await goodsStore.getAllCount({ type: 'search', ...commonPageParams });
+        let searchCount = await postStore.getAllCount({ type: 'search', ...commonPageParams });
         let { cnt: searchTotal } = searchCount[0];
-        let receiveCount = await goodsStore.getAllCount({ type: 'receive', ...commonPageParams });
+        let receiveCount = await postStore.getAllCount({ type: 'receive', ...commonPageParams });
         let { cnt: receiveTotal } = receiveCount[0];
         let commentCount = await commentStore.getAllCount({ ...commonPageParams });
         let { cnt: commentTotal } = commentCount[0];

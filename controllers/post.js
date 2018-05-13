@@ -4,15 +4,15 @@
  * @Date:2017/5/8
  * @Time:14:26
  */
-const goodsMySqlStore = require('./../backServices/goods');
-const store = new goodsMySqlStore('./dbSqllite/goods.db');
+const postMySqlStore = require('./../backServices/post');
+const store = new postMySqlStore('./dbSqllite/post.db');
 const utils = require('./../utils/utils');
 const fetch = require('node-fetch');
 const config = require('../config');
 const errorConstant = require('./../errorConstants');
 const { USER_EXIST, USER_NOT_EXIST, LOGIN_PASSWORD_ERROR, SYS_ERROR } = errorConstant;
 
-const goods = {
+const post = {
     getListByOffset: async (ctx, next) => {
         utils.setHeaders(ctx);
         let queryParams = ctx.request.query ? ctx.request.query : null;
@@ -118,6 +118,26 @@ const goods = {
         }
         ctx.response.body = res;
     },
+
+    batchUpdateStatusByIds: async (ctx, next) => {
+        utils.setHeaders(ctx);
+        const params = ctx.request.body ? ctx.request.body : null;
+        let { flag, data, err } = await store.batchUpdateStatusByIds(params);
+        let res = null;
+        if (flag) {
+            res = {
+                code: 0,
+                data: null,
+                message: null
+            };
+        } else {
+            res = {
+                data: null,
+                ...SYS_ERROR,
+            };
+        }
+        ctx.response.body = res;
+    },
     // updateById: async (ctx, next) => {
     //     utils.setHeaders(ctx);
     //     const params = ctx.request.body ? ctx.request.body : null;
@@ -195,9 +215,10 @@ const goods = {
 };
 
 module.exports = {
-    'GET /rabbitApi/goods/getListByOffset': goods.getListByOffset,
-    'GET /rabbitApi/goods/getById': goods.getById,
-    'POST /rabbitApi/goods/create': goods.create,
-    'POST /rabbitApi/goods/updateReadNumById': goods.updateReadNumById,
+    'GET /rabbitApi/post/getListByOffset': post.getListByOffset,
+    'GET /rabbitApi/post/getById': post.getById,
+    'POST /rabbitApi/post/create': post.create,
+    'POST /rabbitApi/post/updateReadNumById': post.updateReadNumById,
+    'POST /rabbitApi/post/batchUpdateStatusByIds': post.batchUpdateStatusByIds,
 
 };

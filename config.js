@@ -5,7 +5,7 @@
  * @Time:15:56
  */
 const config = {
-    version: '0.1.2',
+    version: '0.2.2',
     mysql: {
         host: "127.0.0.1",  //主机
         user: "root", //账号

@@ -78,6 +78,26 @@ const comment = {
         }
         ctx.response.body = res;
     },
+
+    batchUpdateStatusByIds: async (ctx, next) => {
+        utils.setHeaders(ctx);
+        const params = ctx.request.body ? ctx.request.body : null;
+        let { flag, data, err } = await store.batchUpdateStatusByIds(params);
+        let res = null;
+        if (flag) {
+            res = {
+                code: 0,
+                data: null,
+                message: null
+            };
+        } else {
+            res = {
+                data: null,
+                ...SYS_ERROR,
+            };
+        }
+        ctx.response.body = res;
+    },
     // updateById: async (ctx, next) => {
     //     utils.setHeaders(ctx);
     //     const params = ctx.request.body ? ctx.request.body : null;
@@ -111,6 +131,7 @@ module.exports = {
     'GET /rabbitApi/comment/getListByOffset': comment.getListByOffset,
     // 'POST /rabbit/comment/batchDeleteByIds': comment.batchDeleteByIds,
     'POST /rabbitApi/comment/create': comment.create,
+    'POST /rabbitApi/comment/batchUpdateStatusByIds': comment.batchUpdateStatusByIds,
     // 'POST /rabbit/comment/updateById': comment.updateById
 
 };

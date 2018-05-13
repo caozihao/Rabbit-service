@@ -18,7 +18,7 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     id INT(11) NOT NULL AUTO_INCREMENT,
                     nickname VARCHAR(64) NOT NULL,
                     phone VARCHAR(64) NOT NULL,
-                   status INT NOT NULL DEFAULT '1',
+                    status INT NOT NULL DEFAULT '1',
                     password VARCHAR(64) NOT NULL,
                     accesstoken VARCHAR(64),
                     lastLoginTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -59,13 +59,18 @@ const pool = mysql.createPool(config.mysql);
 
 
 const getSqlByParams = (params) => {
-    let { pageNo: offset, pageSize: limit, nickname, phone } = params;
+    let { pageNo: offset, pageSize: limit, nickname, phone, status } = params;
     // let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
     let nicknameSQL = '';
     let phoneSQL = '';
+    let statusSQL = '';
 
     if (nickname) {
         nicknameSQL = `AND nickname LIKE '%${nickname}%'`;
+    }
+
+    if (status) {
+        statusSQL = `AND status= ${status}`;
     }
 
     if (phone) {
@@ -75,16 +80,8 @@ const getSqlByParams = (params) => {
     offset = parseInt(offset);
     limit = parseInt(limit);
 
-    let SQL_GET_PAGE = '';
-    let SQL_GET_COUNT = '';
-
-    if (!nickname && !phone) {
-        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
-        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} `;
-    } else {
-        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  1 = 1 ${nicknameSQL} ${phoneSQL}  ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
-        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE  1 = 1 ${nicknameSQL} ${phoneSQL}`;
-    }
+    let SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  1 = 1 ${nicknameSQL} ${phoneSQL} ${statusSQL}  ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+    let SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE  1 = 1 ${nicknameSQL} ${phoneSQL} ${statusSQL}`;
 
     return {
         SQL_GET_COUNT,

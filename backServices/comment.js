@@ -17,7 +17,8 @@ const TABLE_NAME = 'comment';
 const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     id INT(11) NOT NULL AUTO_INCREMENT,
                     content TEXT NOT NULL,
-                    goodsId INT(11) NOT NULL,
+                    postId INT(11) NOT NULL,
+                    postTitle VARCHAR(64) NOT NULL,
                     userId INT(11) NOT NULL,
                     status INT NOT NULL DEFAULT '1',
                     userNickname VARCHAR(64) NOT NULL,
@@ -25,29 +26,29 @@ const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     updatedTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     PRIMARY KEY (id));`;
 
-const SQL_SET = `INSERT INTO ${TABLE_NAME} (content, userId,userNickname,goodsId) VALUES (?, ? ,?, ?)`;
+const SQL_SET = `INSERT INTO ${TABLE_NAME} (content, userId,userNickname,postId,postTitle) VALUES (?, ? ,?, ?,?)`;
 const SQL_DELETE_IDS = `DELETE FROM ${TABLE_NAME} WHERE id in ?`;
+const SQL_BATCH_UPDATE_STATUS = `UPDATE ${TABLE_NAME} SET status = ?  WHERE id in (?)`;
+
 const utils = require('./../utils/utils');
 const mysql = require('mysql');
 const config = require('../config');
 const pool = mysql.createPool(config.mysql);
 
 const getSqlByParams = (params) => {
-    let { pageNo: offset, pageSize: limit, goodsId } = params;
+    let { pageNo: offset, pageSize: limit, postId } = params;
+
+    let postIdSQL = '';
+
+    if (postId) {
+        postIdSQL = `AND postId = '${postId}'`;
+    }
 
     offset = parseInt(offset);
     limit = parseInt(limit);
 
-    let SQL_GET_PAGE = '';
-    let SQL_GET_COUNT = '';
-
-    if (goodsId) {
-        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  goodsId = '${goodsId}' ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
-        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE goodsId = '${goodsId}'`;
-    } else {
-        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME}  ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
-        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME}`;
-    }
+    let SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE 1=1 ${postIdSQL} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+    let SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE 1=1 ${postIdSQL}`;
 
     return {
         SQL_GET_COUNT,
@@ -121,6 +122,25 @@ class MySqlStore {
                 });
             });
         })
+    }
+
+    batchUpdateStatusByIds(params) {
+        return new Promise((resolve, reject) => {
+            let { ids, status } = params;
+            // ids = "(" + ids + ")";
+            pool.getConnection((err, connection) => {
+                connection.query(SQL_BATCH_UPDATE_STATUS, [status, ids], (err) => {
+                    if (!err) {
+                        resolve({ flag: true });
+                    } else {
+                        reject({ flag: false, err });
+                        console.log("BatchUpdateStatusById error->", err);
+                    }
+                    connection.release()
+                });
+            });
+
+        });
     }
 
 }

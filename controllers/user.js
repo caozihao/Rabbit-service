@@ -152,7 +152,7 @@ const user = {
     logout: async (ctx, next) => {
         utils.setHeaders(ctx);
         const params = ctx.request.body ? ctx.request.body : null;
-        let { flag, err } = await store.back_clearAccesstoken(params);
+        let { flag, err } = await store.clearAccesstoken(params);
         let res = null;
         if (flag) {
             res = {

@@ -11,24 +11,22 @@
  * @Time:17:04
  */
 
-const TABLE_NAME = 'goods';
+const TABLE_NAME = 'post';
 
 const SQL_CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
                     id INT(11) NOT NULL AUTO_INCREMENT,
-                    type VARCHAR(64) NOT NULL,
-                    category INT NOT NULL,
                     status INT NOT NULL DEFAULT '1',  
-                    place  VARCHAR(64) NOT NULL,
-                    uploadFilename VARCHAR(64),
+                    title VARCHAR(64) NOT NULL,
 
+                    readNum INT(11) DEFAULT 1 ,
+                    content TEXT,
+                    type VARCHAR(64) NOT NULL,
+                    goodsCategory INT NOT NULL,
+                    goodsPlace  VARCHAR(64) NOT NULL,
+                    uploadFilename VARCHAR(64),
                     userId INT NOT NULL,
                     userNickname  VARCHAR(64) NOT NULL,
                     userPhone VARCHAR(64) NOT NULL,
-                    
-                    articleTitle VARCHAR(64) NOT NULL,
-                    articleReadNum INT(11) DEFAULT 1 ,
-                    articleContent TEXT,
-
                     createdTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updatedTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     PRIMARY KEY (id));`;
@@ -50,11 +48,13 @@ const SQL_GET_PAGE_NO_FILTER = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime
 
 const SQL_GET_ID = `SELECT * FROM ${TABLE_NAME} WHERE id = ?`;
 
-const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type=?,articleTitle=?, category=?,place=?,articleContent=?,userId=?,userNickname=?,userPhone=? ,uploadFilename=? WHERE id = ?`;
+const SQL_UPDATE_ID = `UPDATE ${TABLE_NAME} SET type=?,title=?, goodsCategory=?,goodsPlace=?,content=?,userId=?,userNickname=?,userPhone=? ,uploadFilename=? WHERE id = ?`;
 
-const SQL_UPDATE_READNUM_ID = `UPDATE ${TABLE_NAME} SET articleReadNum = articleReadNum + 1 WHERE id = ?`;
+const SQL_UPDATE_READNUM_ID = `UPDATE ${TABLE_NAME} SET readNum = readNum + 1 WHERE id = ?`;
 
-const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type,articleTitle, category,place,articleContent,userId,userNickname,userPhone,uploadFilename) VALUES (?,?,?,?,?,?,?,?,?)`;
+const SQL_SET = `INSERT  INTO ${TABLE_NAME} (type,title, goodsCategory,goodsPlace,content,userId,userNickname,userPhone,uploadFilename) VALUES (?,?,?,?,?,?,?,?,?)`;
+
+const SQL_BATCH_UPDATE_STATUS = `UPDATE ${TABLE_NAME} SET status = ?  WHERE id in (?)`;
 
 const mysql = require('mysql');
 const config = require('../config');
@@ -62,18 +62,29 @@ const pool = mysql.createPool(config.mysql);
 
 
 const getSqlByParams = (params) => {
-    let { pageNo: offset, pageSize: limit, place, category, type, startTime, endTime } = params;
+    let { pageNo: offset, pageSize: limit, goodsPlace, goodsCategory, type, startTime, endTime, status } = params;
     // let SQL_GET_PAGE = SQL_GET_PAGE_NO_FILTER;
     let palceSQL = '';
-    let categorySQL = '';
+    let goodsCategorySQL = '';
     let createdTimeSQL = '';
+    let typeSQL = '';
+    let statusSQL = '';
 
-    if (place) {
-        palceSQL = `AND place LIKE '%${place}%'`;
+
+    if (type) {
+        typeSQL = `AND type = '${type}'`;
     }
 
-    if (category && category !== '-1') {
-        categorySQL = `AND category = '${category}'`;
+    if (goodsPlace) {
+        palceSQL = `AND goodsPlace LIKE '%${goodsPlace}%'`;
+    }
+
+    if (goodsCategory) {
+        goodsCategorySQL = `AND goodsCategory = '${goodsCategory}'`;
+    }
+
+    if (status) {
+        statusSQL = `AND status=${status}`;
     }
 
     if (startTime && endTime) {
@@ -83,16 +94,8 @@ const getSqlByParams = (params) => {
     offset = parseInt(offset);
     limit = parseInt(limit);
 
-    let SQL_GET_PAGE = '';
-    let SQL_GET_COUNT = '';
-
-    if (!type && !palceSQL && !categorySQL && !createdTimeSQL) {
-        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
-        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} `;
-    } else {
-        SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
-        SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME} WHERE  type = '${type}' ${palceSQL} ${categorySQL} ${createdTimeSQL}`;
-    }
+    let SQL_GET_PAGE = `SELECT * FROM ${TABLE_NAME} WHERE  1 = 1  ${typeSQL} ${palceSQL} ${goodsCategorySQL} ${createdTimeSQL} ${statusSQL} ORDER BY updatedTime DESC LIMIT ${(offset - 1) * limit} , ${limit}`;
+    let SQL_GET_COUNT = `SELECT count(*) as cnt FROM ${TABLE_NAME}  WHERE 1=1  ${typeSQL}  ${palceSQL} ${goodsCategorySQL} ${createdTimeSQL} ${statusSQL}`;
 
 
     return {
@@ -254,6 +257,25 @@ class MySqlStore {
             });
 
         })
+    }
+
+    batchUpdateStatusByIds(params) {
+        return new Promise((resolve, reject) => {
+            let { ids, status } = params;
+            // ids = "(" + ids + ")";
+            pool.getConnection((err, connection) => {
+                connection.query(SQL_BATCH_UPDATE_STATUS, [status, ids], (err) => {
+                    if (!err) {
+                        resolve({ flag: true });
+                    } else {
+                        reject({ flag: false, err });
+                        console.log("BatchUpdateStatusById error->", err);
+                    }
+                    connection.release()
+                });
+            });
+
+        });
     }
     //查找上一条
     // front_get_page_previous(params) {
