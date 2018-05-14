@@ -15,7 +15,7 @@ module.exports = {
   },
   USER_ACCOUNT_IS_BANNED: {
     code: 10000104,
-    message: '您的账号被封禁，请联系管理员'
+    message: '您的账号被封禁，请去帮助中心向管理员邮箱发申请解禁'
   },
   SYS_ERROR: {
     code: 10000000,
